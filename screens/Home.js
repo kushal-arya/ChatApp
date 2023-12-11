@@ -1,69 +1,145 @@
-import React, { useEffect } from "react";
-import { View, TouchableOpacity, Text, Image, StyleSheet } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { FontAwesome } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import { View, TouchableOpacity, Text, StyleSheet, Modal, TouchableHighlight, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { signOut } from 'firebase/auth';
+import { auth } from '../config/firebase';
 import colors from '../colors';
-import { Entypo } from '@expo/vector-icons';
-const catImageUrl = "https://i.guim.co.uk/img/media/26392d05302e02f7bf4eb143bb84c8097d09144b/446_167_3683_2210/master/3683.jpg?width=1200&height=1200&quality=85&auto=format&fit=crop&s=49ed3252c0b2ffb49cf8b508892e452d";
+import { Entypo, MaterialIcons } from '@expo/vector-icons';
 
 const Home = () => {
-
     const navigation = useNavigation();
+    const [modalVisible, setModalVisible] = useState(false);
 
-    useEffect(() => {
-        navigation.setOptions({
-            headerLeft: () => (
-                <FontAwesome name="search" size={24} color={colors.gray} style={{marginLeft: 15}}/>
-            ),
-            headerRight: () => (
-                <Image
-                    source={{ uri: catImageUrl }}
-                    style={{
-                        width: 40,
-                        height: 40,
-                        marginRight: 15,
-                    }}
-                />
-            ),
-        });
-    }, [navigation]);
+    const handleSignOut = async () => {
+        try {
+            await signOut(auth);
+            // Optional: Navigate to login after sign out
+            // navigation.navigate('Login');
+        } catch (error) {
+            Alert.alert('Error', 'Failed to log out');
+        }
+    };
+
+    const navigateToProfile = () => {
+        setModalVisible(false);
+        navigation.navigate('Profile');
+    };
+
+    const navigateToChat = () => {
+        const chatRoomId = 'some_chat_room_id'; // Replace with actual chat room ID logic
+        navigation.navigate('Chat', { chatRoomId });
+    };
 
     return (
         <View style={styles.container}>
-            <TouchableOpacity
-                onPress={() => navigation.navigate("Chat")}
-                style={styles.chatButton}
+            <View style={styles.topNavBar}>
+                <Text style={styles.navBarTitle}>Chat App</Text>
+                <TouchableOpacity onPress={() => setModalVisible(true)}>
+                    <Entypo name="dots-three-vertical" size={24} color="white" />
+                </TouchableOpacity>
+            </View>
+
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => {
+                    setModalVisible(!modalVisible);
+                }}
             >
-                <Entypo name="chat" size={24} color={colors.lightGray} />
+                <View style={styles.centeredView}>
+                    <View style={styles.modalView}>
+                        <TouchableHighlight
+                            style={styles.modalButton}
+                            onPress={navigateToProfile}
+                        >
+                            <Text style={styles.textStyle}>Profile</Text>
+                        </TouchableHighlight>
+                        <TouchableHighlight
+                            style={styles.modalButton}
+                            onPress={handleSignOut}
+                        >
+                            <Text style={styles.textStyle}>Logout</Text>
+                        </TouchableHighlight>
+                    </View>
+                </View>
+            </Modal>
+
+            <TouchableOpacity onPress={navigateToChat} style={styles.button}>
+                <MaterialIcons name="chat" size={24} color="white" />
+                <Text style={styles.buttonText}>Go to Chat</Text>
             </TouchableOpacity>
+
+            {/* Any other UI components you'd like to include */}
         </View>
     );
-    };
+};
 
-    export default Home;
-
-    const styles = StyleSheet.create({
-        container: {
-            flex: 1,
-            justifyContent: 'flex-end',
-            alignItems: 'flex-end',
-            backgroundColor: "#fff",
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: colors.background,
+    },
+    topNavBar: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: colors.primary,
+        paddingHorizontal: 15,
+        paddingVertical: 10,
+    },
+    navBarTitle: {
+        color: 'white',
+        fontSize: 20,
+    },
+    centeredView: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop: 22
+    },
+    modalView: {
+        margin: 20,
+        backgroundColor: "white",
+        borderRadius: 20,
+        padding: 35,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2
         },
-        chatButton: {
-            backgroundColor: colors.primary,
-            height: 50,
-            width: 50,
-            borderRadius: 25,
-            alignItems: 'center',
-            justifyContent: 'center',
-            shadowColor: colors.primary,
-            shadowOffset: {
-                width: 0,
-                height: 2,
-            },
-            shadowOpacity: .9,
-            shadowRadius: 8,
-            marginRight: 20,
-            marginBottom: 50,
-        }
-    });
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5
+    },
+    modalButton: {
+        backgroundColor: colors.primary,
+        borderRadius: 20,
+        padding: 10,
+        elevation: 2,
+        marginVertical: 5,
+    },
+    textStyle: {
+        color: "white",
+        fontWeight: "bold",
+        textAlign: "center"
+    },
+    button: {
+        backgroundColor: colors.primary,
+        padding: 20,
+        borderRadius: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: 10,
+    },
+    buttonText: {
+        color: 'white',
+        fontSize: 18,
+        marginLeft: 10,
+    },
+   
+});
+
+export default Home;
